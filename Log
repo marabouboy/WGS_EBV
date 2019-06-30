@@ -1,0 +1,63 @@
+#Log of the progress:
+#The first part was to handle the download of the files. This was done within the Rackham computer. It was pretty straight forward. This was done within a tmux session: "tmux new-session -s download".
+#Script:
+
+#!/bin/bash
+
+PATH=$PATH:/scratch/gusalaba/tools/sratoolkit.2.9.6-1-centos_linux64/bin
+echo "Reconfigure The Path: Done"
+
+cd /scratch/gusalaba/data &
+wait; echo "Moving Directory, Prefetch: Done"
+
+wait; prefetch -X 400000000000 ERS1066773 &
+wait; echo "Download 1 is complete" &
+wait; prefetch -X 400000000000 ERS1066772 &
+wait; echo "Download 2 is complete" &
+wait; prefetch -X 400000000000 ERS1066771 &
+wait; echo "Download 3 is complete" &
+wait; prefetch -X 400000000000 ERS1066770 &
+wait; echo "Download 4 is complete" &
+wait; prefetch -X 400000000000 ERS1066769 &
+wait; echo "Download 5 is complete" &
+wait; prefetch -X 400000000000 ERS1066768 &
+wait; echo "Download 6 is complete" &
+wait; prefetch -X 400000000000 ERS1066767 &
+wait; echo "Download 7 is complete" &
+wait; prefetch -X 400000000000 ERS1066766 &
+wait; echo "Download 8 is complete" &
+wait; prefetch -X 400000000000 ERS1066765 &
+wait; echo "Download 9 is complete" &
+wait; prefetch -X 400000000000 ERS1066764 &
+wait; echo "Download 10 is complete" &
+wait; prefetch -X 400000000000 ERS1066763 &
+wait; echo "Download 11 is complete" &
+wait; prefetch -X 400000000000 ERS1066762 &
+wait; echo "Download 12 is complete" &
+wait; prefetch -X 400000000000 ERS1066760 &
+wait; echo "Download 13 is complete" &
+wait; prefetch -X 400000000000 ERS1066759 &
+wait; echo "Download 14 is complete" &
+wait; prefetch -X 400000000000 ERS1066758 &
+wait; echo "Download 15 is complete" &
+wait; prefetch -X 400000000000 ERS1066757 &
+wait; echo "Download 16 is complete" &
+wait; prefetch -X 400000000000 ERS1066756 &
+wait; echo "Download 17 is complete" &
+wait; prefetch -X 400000000000 ERS1066755 &
+wait; echo "Download 18 is complete" &
+wait; prefetch -X 400000000000 ERS1066754 &
+wait; echo "Download 19 is complete" &
+wait; prefetch -X 400000000000 ERS1066753 &
+wait; echo "Download 20 is complete" &
+wait; prefetch -X 400000000000 ERS1066752 &
+wait; echo "Download 21 is complete" &
+
+wait; echo "The Entire Download is completed"
+
+#The second part was to transfer the files from Rackham into Bianca.
+#This was done through a combination of tmux, ssh, stfp, and put. Where first one created a tmux session "tmux new-session -s transfer", then one logged into the "ssh-Rackham" and moved to the desired directory containing all the sra files. After that one (while inside ssh-Rackham) connected to bianca through stfp (stfp-Bianca). Once inside, one moved to the desired directory one wants the file, within Bianca, and then one simply used "put *" to transfer all the files into Bianca.
+#However, do note that 2 files ERS1066765 and ERS1066773 were not downloaded in Rackham due to limit of space and had to be downloaded afterwards.
+
+#The third part was to convert the .sra files into .fastq format. This was done through the sratool fasterq-dump. First one tried it within rackham with the 2 files that had to be downloaded in a second batch, ERS1066773 and ER1066765. It was simply done within a tmux session "tmux new -s conversion" while within Rackham and then simply insert the modules "module load bioinfo-tools sratools" and then convert it "fasterq-dump ERS1066765" for the first one. Sample ERS1066773 will be converted later. Once the conversion for ERS1066765 had been completed. It gave 2 fastq files, each 383 GB in size. They were then compressed using the tar command "tar -czvf ERS1066765.tar.gz ERS1066765.sra_1.fastq ERS1066765.sra_2.fastq"
+(CONTINUE)
