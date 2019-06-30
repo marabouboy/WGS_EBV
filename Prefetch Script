@@ -1,0 +1,53 @@
+!/bin/bash
+
+PATH=$PATH:/scratch/gusalaba/tools/sratoolkit.2.9.6-1-centos_linux64/bin
+echo "Reconfigure The Path: Done"
+
+cd /scratch/gusalaba/data &
+wait; echo "Moving Directory, Prefetch: Done"
+
+wait; prefetch -X 4000000000000 ERS1066773 &
+wait; echo "Download 1 is complete" &
+wait; prefetch -X 4000000000000 ERS1066772 &
+wait; echo "Download 2 is complete" &
+wait; prefetch -X 4000000000000 ERS1066771 &
+wait; echo "Download 3 is complete" &
+wait; prefetch -X 4000000000000 ERS1066770 &
+wait; echo "Download 4 is complete" &
+wait; prefetch -X 4000000000000 ERS1066769 &
+wait; echo "Download 5 is complete" &
+wait; prefetch -X 4000000000000 ERS1066768 &
+wait; echo "Download 6 is complete" &
+wait; prefetch -X 4000000000000 ERS1066767 &
+wait; echo "Download 7 is complete" &
+wait; prefetch -X 4000000000000 ERS1066766 &
+wait; echo "Download 8 is complete" &
+wait; prefetch -X 4000000000000 ERS1066765 &
+wait; echo "Download 9 is complete" &
+wait; prefetch -X 4000000000000 ERS1066764 &
+wait; echo "Download 10 is complete" &
+wait; prefetch -X 4000000000000 ERS1066763 &
+wait; echo "Download 11 is complete" &
+wait; prefetch -X 4000000000000 ERS1066762 &
+wait; echo "Download 12 is complete" &
+wait; prefetch -X 4000000000000 ERS1066760 &
+wait; echo "Download 13 is complete" &
+wait; prefetch -X 4000000000000 ERS1066759 &
+wait; echo "Download 14 is complete" &
+wait; prefetch -X 4000000000000 ERS1066758 &
+wait; echo "Download 15 is complete" &
+wait; prefetch -X 4000000000000 ERS1066757 &
+wait; echo "Download 16 is complete" &
+wait; prefetch -X 4000000000000 ERS1066756 &
+wait; echo "Download 17 is complete" &
+wait; prefetch -X 4000000000000 ERS1066755 &
+wait; echo "Download 18 is complete" &
+wait; prefetch -X 4000000000000 ERS1066754 &
+wait; echo "Download 19 is complete" &
+wait; prefetch -X 4000000000000 ERS1066753 &
+wait; echo "Download 20 is complete" &
+wait; prefetch -X 4000000000000 ERS1066752 &
+wait; echo "Download 21 is complete" &
+
+wait; echo "The Entire Download is complete"
+
