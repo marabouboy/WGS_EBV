@@ -1,0 +1,30 @@
+#!/bin/bash
+
+#Input & Varibles
+read -p "SRA Accession Number: " SAMPLE
+DATADIR=/scratch/gusalaba/ncbi/sra
+echo "Variables: Done"
+
+#Setting the module environment
+module load bioinfo-tools sratools
+echo "Module load: Done"
+
+#Setting directory
+cd $DATADIR
+echo "Changing directory: Done"
+
+#Prefetch:
+echo &
+wait; echo "Initate Prefetch" 
+wait; prefetch -X 4000000000 $SAMPLE &
+wait; echo "Download of" $SAMPLE ": Done" &
+#Fasterq-dump:
+wait; echo &
+wait; echo "Initiate Fasterq-dump" &
+wait; fasterq-dump $SAMPLE.sra
+wait; echo "Conversion of" $SAMPLE ": Done" &
+#Compressing:
+wait; echo &
+wait; echo "Initiate Compressing" &
+wait; tar -czvf $SAMPLE.tar.gz $SAMPLE.sra_1.fastq $SAMPLE.sra_2.fastq &
+wait; echo "Compression of" $SAMPLE ": Done"
