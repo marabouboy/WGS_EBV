@@ -18,13 +18,22 @@ echo &
 wait; echo "Initate Prefetch" 
 wait; prefetch -X 4000000000 $SAMPLE &
 wait; echo "Download of" $SAMPLE ": Done" &
+
 #Fasterq-dump:
 wait; echo &
 wait; echo "Initiate Fasterq-dump" &
 wait; fasterq-dump $SAMPLE.sra
 wait; echo "Conversion of" $SAMPLE ": Done" &
+
 #Compressing:
 wait; echo &
 wait; echo "Initiate Compressing" &
 wait; tar -czvf $SAMPLE.tar.gz $SAMPLE.sra_1.fastq $SAMPLE.sra_2.fastq &
-wait; echo "Compression of" $SAMPLE ": Done"
+wait; echo "Compression of" $SAMPLE ": Done" &
+
+#Deletion of old files:
+wait; echo &
+wait; echo "Initiate Removal" &
+wait; rm $SAMPLE.sra* &
+wait; echo &
+wait; echo "Removal of" $SAMPLE.sra "and" $SAMPLE.fastq": Done" &
