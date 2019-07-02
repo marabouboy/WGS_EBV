@@ -3,7 +3,10 @@
 #Input & Varibles
 read -p "SRA Accession Number: " SAMPLE
 DATADIR=/scratch/gusalaba/ncbi/sra
-echo "Variables: Done"
+RED='\033[0;31m'
+NC='\033[0m'
+echo &
+wait; echo "Variables: Done"
 
 #Setting the module environment
 module load bioinfo-tools sratools
@@ -15,25 +18,30 @@ echo "Changing directory: Done"
 
 #Prefetch:
 echo &
-wait; echo "Initate Prefetch" 
+wait; echo -e "${RED}Initate Prefetch${NC}" &
 wait; prefetch -X 4000000000 $SAMPLE &
 wait; echo "Download of" $SAMPLE ": Done" &
+wait; echo &
 
 #Fasterq-dump:
 wait; echo &
-wait; echo "Initiate Fasterq-dump" &
-wait; fasterq-dump $SAMPLE.sra
+wait; echo -e "${RED}Initiate Fasterq-dump${NC}" &
+wait; fasterq-dump $SAMPLE.sra 
+echo &
 wait; echo "Conversion of" $SAMPLE ": Done" &
+wait; echo &
 
 #Compressing:
 wait; echo &
-wait; echo "Initiate Compressing" &
+wait; echo -e "${RED}Initiate Compressing${NC}" &
 wait; tar -czvf $SAMPLE.tar.gz $SAMPLE.sra_1.fastq $SAMPLE.sra_2.fastq &
+wait; echo &
 wait; echo "Compression of" $SAMPLE ": Done" &
+wait; echo &
 
 #Deletion of old files:
 wait; echo &
-wait; echo "Initiate Removal" &
+wait; echo -e "${RED}Initiate Removal${NC}" &
 wait; rm $SAMPLE.sra* &
-wait; echo &
 wait; echo "Removal of" $SAMPLE.sra "and" $SAMPLE.fastq": Done" &
+wait; echo
