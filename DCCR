@@ -2,7 +2,7 @@
 
 #Input & Varibles
 read -p "SRA Accession Number: " SAMPLE
-DATADIR=/scratch/gusalaba/ncbi/sra
+DATADIR=[(FILL IN APPROPRIATE DIRECTORY)
 RED='\033[0;31m'
 NC='\033[0m'
 echo &
