@@ -1,0 +1,86 @@
+#!/bin/bash
+
+#Input & Constants:
+##Constants
+DATADIR=pwd
+SRA=[FILL]/sra
+TMP=[FILL]/tmp
+FASTQ=[FILL]/fastq
+QC=[FILL]/qualitycheck
+REF=[FILL]/refseq
+BAM=[FILL]/bam
+ALN=[FILL]/alignment
+RED='\033[0;31m'
+NC='\033[0m'
+echo &
+wait; echo -e "${RED}Initiate the QIACIA script: ${NC}" &
+wait; echo &
+
+echo -e "${RED}Remember to be in the correct directory where your samples are${NC}" &
+##Input
+wait; read -p "Sample: " SAMPLE 
+wait; read -p "Reference: " RF
+
+#Setting the module environment:
+echo &
+wait; echo -e "${RED}Initiate module load ${NC}"
+wait; module load bioinfo-tools FastQC bwa samtools
+wait; module list &
+wait; echo &
+wait; echo "Module load: Done" &
+wait; echo &
+
+#Setting the directories:
+##QualityControl
+wait; echo "Making a QualityControl Directory"
+wait; cd $QC
+wait; mkdir $SAMPLE &
+wait; echo "QualityControl Directory: Done"
+##BAM
+wait; echo "Making a BAM Directory" &
+wait; cd $BAM
+wait; mkdir $SAMPLE &
+wait; echo "BAM Directory: Done"
+
+#Checking the quality of the reads through FastQC:
+wait; cd $FASTQ 
+wait; echo &
+wait; echo -e "${RED}Initiate FastQC${NC}" &
+wait; echo &
+wait; fastqc $SAMPLE.sra_1.fastq $SAMPLE.sra_2.fastq -o $QC/$SAMPLE/ -d $TMP &
+wait; echo "Quality Check: Done" &
+wait; echo &
+
+#Aligning:
+##Indexing the reference:
+wait; echo -e "${RED}Initiate Indexing of Reference Sequence${NC}"
+wait; echo &
+wait; cd $REF
+bwa index $RF
+wait; echo "Indexing of reference sequence: Done" &
+wait; echo &
+
+
+##Aligning the sequences to the reference:
+echo -e "${RED}Initiate Aligning (BWA MEM) to the Reference Sequence${NC}" &
+wait; echo &
+wait; cd $REF &
+wait; bwa mem -p $RF $FASTQ/$SAMPLE.sra_1.fastq $FASTQ/$SAMPLE.sra_2.fastq > $ALN/$SAMPLE-ALN-PE.sam
+echo &
+echo "Alignment with BWA MEM: Done" &
+echo 
+
+##Conversion into .bam file:
+wait; echo -e "${RED}Initiate Conversion from .sam into .bam${NC}" &
+wait; cd $ALN
+samtools view -b $SAMPLE-ALN-PE.sam > $BAM/$SAMPLE/$SAMPLE-ALN-PE.bam 
+samtools sort $BAM/$SAMPLE/$SAMPLE-ALN-PE.bam -o $BAM/$SAMPLE/$SAMPLE-PE_sorted.bam
+echo "Conversion from .sam into .bam file: Done" &
+echo
+
+##Indexing the .bam file:
+echo -e "${RED}Initiate indexing the .bam file${NC}" &
+wait; cd $BAM
+wait; samtools index $SAMPLE/$SAMPLE-PE_sorted.bam
+echo "Indexing of the -bam file: Done"
+echo
