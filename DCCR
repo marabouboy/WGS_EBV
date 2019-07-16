@@ -1,12 +1,18 @@
 #!/bin/bash
 
 #Input & Varibles
+##Input
 read -p "SRA Accession Number: " SAMPLE
-DATADIR=[(FILL IN APPROPRIATE DIRECTORY)
+#Variables
+DATADIR=/scratch/gusalaba/ncbi/sra
 RED='\033[0;31m'
 NC='\033[0m'
-echo &
-wait; echo "Variables: Done"
+##Error Flags
+Prefetch_Error_Flag=0
+Fasterq_Dump_Error_Flag=0
+Compressing_Error_Flag=0
+
+echo && echo "Variables: Done"
 
 #Setting the module environment
 module load bioinfo-tools sratools
@@ -17,55 +23,46 @@ cd $DATADIR
 echo "Changing directory: Done"
 
 #Prefetch:
-echo &
-wait; echo -e "${RED}Initate Prefetch${NC}" &
-wait; prefetch -X 4000000000 $SAMPLE &
-wait; echo "Download of" $SAMPLE ": Done" &
-wait; echo &
+echo && echo -e "${RED}Initate Prefetch${NC}" &
+wait; prefetch -X 4000000000 $SAMPLE && Prefetch_Error_Flag="1" || Prefetch_Error_Flag="2"
+echo "Download of" $SAMPLE": Done" && echo "Test:"$Prefetch_Error_Flag
+#Prefetch_Error_Flag="1" #This exists in case of needing to enter the program without the Prefetch part. Only Comment (#) it out when not needed
 
 #Fasterq-dump:
-wait; echo &
-wait; echo -e "${RED}Initiate Fasterq-dump${NC}" &
-wait; fasterq-dump $SAMPLE.sra 
-echo &
-wait; echo "Conversion of" $SAMPLE ": Done" &
-wait; echo &
+if [ $Prefetch_Error_Flag == "1" ] 
+then echo -e "${RED}Initiate Fasterq-dump${NC}" && fasterq-dump $SAMPLE.sra && Fasterq_Dump_Error_Flag="1" || Fasterq_Dump_Error_Flag="2" && echo "Conversion of" $SAMPLE ": Done" && echo && echo "Test:"$Fasterq_Dump_Error_Flag
+else echo && echo "Error in Prefetch Stage" && exit
+fi
+#Fasterq_Dump_Error_Flag="1" #This exists in case of needing to enter the program without the Fasterq-dump part. Comment (#) it out when not needed.
 
 #Compressing:
-wait; echo &
-wait; echo -e "${RED}Initiate Compressing${NC}" &
-wait; tar -czvf $SAMPLE.tar.gz $SAMPLE.sra_1.fastq $SAMPLE.sra_2.fastq &
-wait; echo &
-wait; echo "Compression of" $SAMPLE ": Done" &
-wait; echo &
+echo &
+if [ $Prefetch_Error_Flag == "1" ] && [ $Fasterq_Dump_Error_Flag == "1" ] 
+then echo -e "${RED}Initiate Compressing${NC}" && tar -czvf $SAMPLE.tar.gz $SAMPLE.sra_1.fastq $SAMPLE.sra_2.fastq && Compressing_Error_Flag="1" || Compressing_Error_Flag="2" && echo && echo "Compression of" $SAMPLE ": Done" 
+else "Download and conversion are faulty." && echo && echo "Test:"$Compressing_Error_Flag && exit
+fi
+#Compressing_Error_Flag="1" #This exists in case of needing to enter the program without the compressing part. Comment (#) it out when not needed.
 
 #Deletion of old files:
 wait; echo &
-wait; echo -e "${RED}Initiate Removal${NC}" &
-wait; rm $SAMPLE.sra* &
-wait; echo "Removal of" $SAMPLE.sra "and" $SAMPLE.fastq": Done" &
-wait; echo
+if [ $Prefetch_Error_Flag == "1" ] && [ $Fasterq_Dump_Error_Flag == "1" ] && [ $Compressing_Error_Flag == "1" ]
+then echo -e "${RED}Checking and possibly removing old files${NC}" && rm $SAMPLE.sra* && echo "Removal of" $SAMPLE.sra "and" $SAMPLE.fastq": Done" &
+else 
+    echo "Error in the process." && exit
+fi
 
-wait; echo "Download of" $SAMPLE ": Done" &
-wait; echo &
+echo "Download of" $SAMPLE ": Done" && echo
+if [ $Prefetch_Error_Flag == "1" ] && [ $Fasterq_Dump_Error_Flag == "1" ] && [ $Compressing_Error_Flag == "1" ]
+then echo -e "${RED}Download, Conversion, Compression, and Removal: Complete. DCCR finished successfully.${NC}"
+elif [ $Prefetch_Error_Flag != "1" ]
+then echo "Error in Prefetch Stage, Value: "$Prefetch_Error_Flag
+elif [ $Fasterq_Dump_Error_Flag != "1" ]
+then echo "Error in Fasterq Dump Stage, Value: "$Fasterq_Dump_Error_Flag
+elif [ $Compressing_Error_Flag != "1" ]
+then echo "Error in Compressing Stage, Value: "$Compressing_Error_Flag
+fi
 
-#Fasterq-dump:
-wait; echo &
-wait; echo -e "${RED}Initiate Fasterq-dump${NC}" &
-wait; fasterq-dump $SAMPLE.sra 
-echo &
-wait; echo "Conversion of" $SAMPLE ": Done" &
-wait; echo &
+echo "Prefetch Error Flag:" $Prefetch_Error_Flag &
+echo "FasterQ Dump Error Flag:" $Fasterq_Dump_Error_Flag &
+echo "Compressing Error Flag:" $Compressing_Error_Flag &
 
-#Compressing:
-wait; echo &
-wait; echo -e "${RED}Initiate Compressing${NC}" &
-wait; tar -czvf $SAMPLE.tar.gz $SAMPLE.sra_1.fastq $SAMPLE.sra_2.fastq &
-wait; echo &
-wait; echo "Compression of" $SAMPLE ": Done" &
-wait; echo &
-
-#Deletion of old files:
-wait; echo &
-wait; echo -e "${RED}Initiate Removal${NC}" &
-wait; rm $SAMPLE.sra* &
