@@ -1,86 +1,109 @@
-#!/bin/bash
+#!/bin/bash -l
+
+#SBATCH -A sens2018120
+#SBATCH -p node
+#SBATCH -n 1
+#SBATCH -t 6-00:00:00
+#SBATCH -J QIACIA
 
 #Input & Constants:
-##Constants
-DATADIR=pwd
-SRA=[FILL]/sra
-TMP=[FILL]/tmp
-FASTQ=[FILL]/fastq
-QC=[FILL]/qualitycheck
-REF=[FILL]/refseq
-BAM=[FILL]/bam
-ALN=[FILL]/alignment
-RED='\033[0;31m'
-NC='\033[0m'
-echo &
-wait; echo -e "${RED}Initiate the QIACIA script: ${NC}" &
-wait; echo &
+##Color-constants:
+RED='\e[31m'
+NC='\e[0m'
 
-echo -e "${RED}Remember to be in the correct directory where your samples are${NC}" &
+printf "\n${RED}Remember to be in the correct directory where your samples are${NC}\n" &
 ##Input
 wait; read -p "Sample: " SAMPLE 
 wait; read -p "Reference: " RF
+#SAMPLE=ERS1066752 #Need to change this variable for each sample.
+#RF=HS_concat.fa
 
+##Constants
+SRA=/proj/nobackup/sens2018120/wharf/gusalaba/gusalaba-sens2018120/data/sra
+TMP=/proj/nobackup/sens2018120/wharf/gusalaba/gusalaba-sens2018120/data/tmp
+FASTQ=/proj/nobackup/sens2018120/wharf/gusalaba/gusalaba-sens2018120/data/fastq/WGS_Matched_NPC
+QC=/proj/nobackup/sens2018120/wharf/gusalaba/gusalaba-sens2018120/data/qualitycheck
+REF=/proj/nobackup/sens2018120/wharf/gusalaba/gusalaba-sens2018120/data/reference-genome
+BAM=/proj/nobackup/sens2018120/wharf/gusalaba/gusalaba-sens2018120/data/bam
+ALN=/proj/nobackup/sens2018120/wharf/gusalaba/gusalaba-sens2018120/data/alignment
+REFCHECK=$REF/$RF.sa
+wait
+
+##Variables
+FASTQC_Flag=0
+Index_Ref_Flag=0
+Aligning_Flag=0
+Conversion_Flag=0
+Indexing_Alignment_Flag=0
+wait
+
+printf "\n${RED}Initiate the QIACIA script: ${NC}\n" 
 #Setting the module environment:
-echo &
-wait; echo -e "${RED}Initiate module load ${NC}"
-wait; module load bioinfo-tools FastQC bwa samtools
-wait; module list &
-wait; echo &
-wait; echo "Module load: Done" &
-wait; echo &
+printf "\n${RED}Initiate module load ${NC}\n"
+module load bioinfo-tools FastQC bwa samtools && module list
+printf "\nModule load: Done\n" &
+wait
 
 #Setting the directories:
 ##QualityControl
-wait; echo "Making a QualityControl Directory"
-wait; cd $QC
-wait; mkdir $SAMPLE &
-wait; echo "QualityControl Directory: Done"
+printf "\nMaking a Quality Control Directory:"
+cd $QC
+if [ -d $SAMPLE ] ; then printf " Directory already exists.\n"
+elif [ ! -d $SAMPLE ] ; then mkdir $SAMPLE 
+printf " Done.\n"
+fi
+wait
+
 ##BAM
-wait; echo "Making a BAM Directory" &
-wait; cd $BAM
-wait; mkdir $SAMPLE &
-wait; echo "BAM Directory: Done"
+printf "Making a BAM Directory:" 
+cd $BAM
+if [ -d $SAMPLE ] ; then printf " Directory already exists.\n"
+elif [ ! -d $SAMPLE ] ; then mkdir $SAMPLE
+printf " Done.\n"
+fi
+wait
 
 #Checking the quality of the reads through FastQC:
-wait; cd $FASTQ 
-wait; echo &
-wait; echo -e "${RED}Initiate FastQC${NC}" &
-wait; echo &
-wait; fastqc $SAMPLE.sra_1.fastq $SAMPLE.sra_2.fastq -o $QC/$SAMPLE/ -d $TMP &
-wait; echo "Quality Check: Done" &
-wait; echo &
+printf "\nChecking Quality: "
+if [ -d $QC/$SAMPLE/$SAMPLE.* ]
+then printf "Quality Control already exists.\n"
+elif [ ! -d $QC/$SAMPLE/$SAMPLE.* ]
+then cd $FASTQ && printf "\n\n${RED}Initiate FastQC${NC}\n" && fastqc $SAMPLE.sra_1.fastq $SAMPLE.sra_2.fastq -o $QC/$SAMPLE/ -d $TMP && printf "\nQuality Check: Done\n"
+fi
+wait
 
 #Aligning:
 ##Indexing the reference:
-wait; echo -e "${RED}Initiate Indexing of Reference Sequence${NC}"
-wait; echo &
-wait; cd $REF
-bwa index $RF
-wait; echo "Indexing of reference sequence: Done" &
-wait; echo &
-
+if [ -f $REFCHECK ]
+then printf "\nReference Already Indexed, proceeding to the next stage" && Index_Ref_Flag=1
+elif [ ! -f $REFCHECK ]
+then printf "\n${RED}Initiate Indexing of Reference Sequence${NC}\n" && cd $REF && bwa index -a bwtsw $RF && Index_Ref_Flag=1 || Index_Ref_Flag=2 && printf "\nIndexing of reference sequence: Done\n" 
+fi
+wait
 
 ##Aligning the sequences to the reference:
-echo -e "${RED}Initiate Aligning (BWA MEM) to the Reference Sequence${NC}" &
-wait; echo &
-wait; cd $REF &
-wait; bwa mem -p $RF $FASTQ/$SAMPLE.sra_1.fastq $FASTQ/$SAMPLE.sra_2.fastq > $ALN/$SAMPLE-ALN-PE.sam
-echo &
-echo "Alignment with BWA MEM: Done" &
-echo 
+if [ $Index_Ref_Flag == 1 ] ; then printf "\n${RED}Initiate Aligning (BWA MEM) to the Reference Sequence${NC}\n" && cd $REF && bwa mem $RF $FASTQ/$SAMPLE.sra_1.fastq $FASTQ/$SAMPLE.sra_2.fastq > $ALN/$SAMPLE-ALN-PE.sam && Aligning_Flag=1 || Aligning_Flag=2 && printf "\nAlignment with BWA MEM: Done\n"
+elif [ $Index_Ref_Flag != 1 ] ; then printf "\nError in Indexing Stage\n" && exit
+fi
+wait
 
-##Conversion into .bam file:
-wait; echo -e "${RED}Initiate Conversion from .sam into .bam${NC}" &
-wait; cd $ALN
-samtools view -b $SAMPLE-ALN-PE.sam > $BAM/$SAMPLE/$SAMPLE-ALN-PE.bam 
-samtools sort $BAM/$SAMPLE/$SAMPLE-ALN-PE.bam -o $BAM/$SAMPLE/$SAMPLE-PE_sorted.bam
-echo "Conversion from .sam into .bam file: Done" &
-echo
+##Conversion into .bam file.
+if [ $Aligning_Flag == 1 ] ; then printf "\n${RED}Initiate Conversion from .sam into .bam${NC}\n" && cd $ALN && samtools view -b $SAMPLE-ALN-PE.sam > $BAM/$SAMPLE/$SAMPLE-ALN-PE.bam && samtools sort $BAM/$SAMPLE/$SAMPLE-ALN-PE.bam -o $BAM/$SAMPLE/$SAMPLE-PE_sorted.bam && Conversion_Flag=1 || Conversion_Flag=2 && printf "\nConversion from .sam into .bam file: Done\n"
+elif [ $Aligning_Flag != 1 ] ; then printf "\nError in Aligning Stage\n" && exit
+fi
+wait
 
 ##Indexing the .bam file:
-echo -e "${RED}Initiate indexing the .bam file${NC}" &
-wait; cd $BAM
-wait; samtools index $SAMPLE/$SAMPLE-PE_sorted.bam
-echo "Indexing of the -bam file: Done"
-echo
+if [ $Conversion_Flag == 1 ] ; then printf "\n${RED}Initiate indexing the .bam file${NC}\n" && cd $BAM && samtools index $SAMPLE/$SAMPLE-PE_sorted.bam && Indexing_Alingment_Flag=1 || Indexing_Alingment_Flag=2 && printf "\nIndexing of the -bam file: Done\n"
+elif [ $Conversion_Flag != 1 ] ; then printf "\nError in Conversion Stage\n" && exit
+fi
+wait
+
+##Removing the intermediary files:
+if [ $Index_Ref_Flag == 1 ] && [ $Aligning_Flag == 1 ] && [ $Conversion_Flag == 1 ] ; then printf "\nRemoval of intermediary .sam file\n" && rm $ALN/$SAMPLE-ALN-PE.sam #.sam file.
+elif [ $Index_Ref_Flag != 1 ] || [ $Aligning_Flag != 1 ] || [ Conversion_Flag == 1 ] ; then printf "\nError in an intermediary stage, exiting the removal.\n" && exit
+fi
+wait
+
+#Finished
+printf "Finished program"
